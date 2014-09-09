@@ -227,6 +227,9 @@ $(document).ready(function() {
     } else if (lambda < 0) {
       $('#lambda').val(0);      
     }
-  })
+  });
+  $('#remove').on('click', function() {
+    redraw();
+  });
 
 });
