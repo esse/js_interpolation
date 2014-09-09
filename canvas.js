@@ -4,9 +4,10 @@ var clickX = new Array();
 var clickY = new Array();
 var paint;
 var onePixel;
+var green;
 var d;
+var b;
 var imageObj;
-var drawed = false;
   
 function prepareCanvas()
 {
@@ -18,6 +19,14 @@ function prepareCanvas()
   d[2]   = 0;
   d[3]   = 255;
   onePixel.data = d;
+  
+  green = context.createImageData(1,1);
+  b = green.data;
+  b[0]   = 0;
+  b[1]   = 255;
+  b[2]   = 0;
+  b[3]   = 255;
+  green.data = b;
   
   imageObj = new Image();
 
@@ -47,16 +56,27 @@ function setPixel(x,y) {
   context.putImageData(onePixel, x, y);
 }
 
+function setGreenPixel(x,y) {
+  context.putImageData(green, x, y);
+}
+
+
 function drawPoint(x,y) {
-  setPixel(x-1, y-1);
-  setPixel(x-1, y);
-  setPixel(x-1, y+1);
-  setPixel(x, y-1)
-  setPixel(x, y+1);
-  setPixel(x, y);
-	setPixel(x+1, y+1);
-  setPixel(x+1, y-1);
-	setPixel(x+1, y);
+  setGreenPixel(x-1, y-1);
+  setGreenPixel(x-1, y);
+  setGreenPixel(x-1, y+1);
+  setGreenPixel(x, y-1)
+  setGreenPixel(x, y+1);
+  setGreenPixel(x, y);
+	setGreenPixel(x+1, y+1);
+  setGreenPixel(x+1, y-1);
+	setGreenPixel(x+1, y);
+}
+
+function redrawPoints() {
+  for(var i=0; i < clickX.length; i++) {
+    drawPoint(clickX[i], clickY[i]);
+  }
 }
 
 function redraw(){
@@ -64,13 +84,6 @@ function redraw(){
 	context.drawImage(imageObj, 0, 0);	
   for(var i=0; i < clickX.length; i++) {
     drawPoint(clickX[i], clickY[i]);
-  }
-  if (!(drawed)) {
-    if (drawed === "c") {
-      drawInterpolationCubicLagrange(parseFloat($('#lambda').val()));
-    } else if (drawed === "q") {
-      drawInterpolationQuadraticLagrange(parseFloat($('#lambda').val()));
-    }
   }
 }
 
@@ -178,12 +191,12 @@ $(document).ready(function() {
   $('#drawInterpQ').on('click', function() {
     var lambda = parseFloat($('#lambda').val());
     drawInterpolationQuadraticLagrange(lambda);
-    drawed = 'q';
+    redrawPoints();
   });
   $('#drawInterpC').on('click', function() {
     var lambda = parseFloat($('#lambda').val());
     drawInterpolationCubicLagrange(lambda);
-    drawed = 'c';
+    redrawPoints();
   });
   $('#clear').on('click', function() {
     clear();
