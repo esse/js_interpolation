@@ -2,11 +2,11 @@ var canvas;
 var context;
 var clickX = new Array();
 var clickY = new Array();
-var clickDrag = new Array();
 var paint;
 var onePixel;
 var d;
-
+var imageObj;
+var drawed = false;
   
 function prepareCanvas()
 {
@@ -18,37 +18,26 @@ function prepareCanvas()
   d[2]   = 0;
   d[3]   = 255;
   onePixel.data = d;
+  
+  imageObj = new Image();
+
+  imageObj.onload = function() {
+    context.drawImage(imageObj, 0, 0);
+  };
+  imageObj.src = 'knee.png'
 	
-	function addClick(x, y, dragging)
+	function addClick(x, y, _)
   {
     clickX.push(x);
     clickY.push(y);
-    clickDrag.push(dragging);
+    drawPoint(x, y);
   }
   
   $('#canvas').mousedown(function(e){
      var mouseX = e.pageX - this.offsetLeft;
      var mouseY = e.pageY - this.offsetTop;
-
-     paint = true;
-     addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
-     redraw();
-   });
-
-
-   // $('#canvas').mousemove(function(e){
-   //     if(paint){
-   //       addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop, true);
-   //       redraw();
-   //     }
-   //   });
-
-   $('#canvas').mouseup(function(e){
-     paint = false;
-   });
-
-   $('#canvas').mouseleave(function(e){
-     paint = false;
+     
+     addClick(mouseX, mouseY);
    });
 
    var paint;
@@ -56,27 +45,32 @@ function prepareCanvas()
 
 function setPixel(x,y) {
   context.putImageData(onePixel, x, y);
-  // ctx.fillStyle = "rgba("+255+","+0+","++","+(a/255)+")";
-  // ctx.fillRect( x, y, 1, 1 );
+}
+
+function drawPoint(x,y) {
+  setPixel(x-1, y-1);
+  setPixel(x-1, y);
+  setPixel(x-1, y+1);
+  setPixel(x, y-1)
+  setPixel(x, y+1);
+  setPixel(x, y);
+	setPixel(x+1, y+1);
+  setPixel(x+1, y-1);
+	setPixel(x+1, y);
 }
 
 function redraw(){
   context.clearRect(0, 0, context.canvas.width, context.canvas.height); // Clears the canvas
-  
-  context.strokeStyle = "#df4b26";
-  context.lineJoin = "round";
-  context.lineWidth = 2;
-			
-  for(var i=0; i < clickX.length; i++) {		
-    context.beginPath();
-    if(clickDrag[i] && i){
-      context.moveTo(clickX[i-1], clickY[i-1]);
-     }else{
-       context.moveTo(clickX[i]-1, clickY[i]);
-     }
-     context.lineTo(clickX[i], clickY[i]);
-     context.closePath();
-     context.stroke();
+	context.drawImage(imageObj, 0, 0);	
+  for(var i=0; i < clickX.length; i++) {
+    drawPoint(clickX[i], clickY[i]);
+  }
+  if (!(drawed)) {
+    if (drawed === "c") {
+      drawInterpolationCubicLagrange(parseFloat($('#lambda').val()));
+    } else if (drawed === "q") {
+      drawInterpolationQuadraticLagrange(parseFloat($('#lambda').val()));
+    }
   }
 }
 
@@ -166,15 +160,60 @@ function drawInterpolationCubicLagrange(lambda) {
   }
 }
 
-$(document).ready(function() {
-  
+function clear() {
+  clickX = new Array();
+  clickY = new Array();
+  redraw();
+}
+
+function undo() {
+  clickX.pop();
+  clickY.pop();
+  redraw();
+}
+
+$(document).ready(function() {  
  
   prepareCanvas();
   $('#drawInterpQ').on('click', function() {
-    drawInterpolationQuadraticLagrange(1);
+    var lambda = parseFloat($('#lambda').val());
+    drawInterpolationQuadraticLagrange(lambda);
+    drawed = 'q';
   });
   $('#drawInterpC').on('click', function() {
-    drawInterpolationCubicLagrange(1);
+    var lambda = parseFloat($('#lambda').val());
+    drawInterpolationCubicLagrange(lambda);
+    drawed = 'c';
   });
+  $('#clear').on('click', function() {
+    clear();
+  });
+  $('#undo').on('click', function() {
+    undo();
+  });
+  $('#less').on('click', function() {
+    var lambda = parseFloat($('#lambda').val())*10;
+    lambda = lambda - 1;
+    if (lambda < 0) {
+      lambda = 0;
+    }
+    $('#lambda').val(lambda/10);
+  });
+  $('#more').on('click', function() {
+    var lambda = parseFloat($('#lambda').val())*10;
+    lambda = lambda + 1;
+    if (lambda > 10) {
+      lambda = 10;
+    }
+    $('#lambda').val(lambda/10);
+  });
+  $('#lambda').on('change', function() {
+    var lambda = parseFloat($('#lambda').val());
+    if (lambda > 1) {
+      $('#lambda').val(1);
+    } else if (lambda < 0) {
+      $('#lambda').val(0);      
+    }
+  })
 
 });
